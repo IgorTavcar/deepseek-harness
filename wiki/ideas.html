@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Surprising ideas — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <p class="kicker"><b>seq 0008</b> the bets that are not obvious</p>
+        <h1>The ideas that do not fall out of “write a ReAct loop.”</h1>
+        <p class="lede">Each of these is a decision someone could have made the other way. Most harnesses did. The Agent Notes record what was given up.</p>
+
+        <article class="idea" id="loop-is-a-plugin">
+          <h3><span class="diamond-mark"></span>The loop is a plugin</h3>
+          <p>There is no god-object <code>Agent</code> to subclass. <code>dsh-agent</code> owns the handle and events. <code>dsh-agent-loop</code> registers a factory. Changing the driver is composition. Changing behavior is almost never changing the driver.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Forget <code>next()</code> and you have vetoed the turn</h3>
+          <p>The framework will not save an observer who treats a waterfall like <code>emit</code>. That is documented, tested, and still easy to get wrong. They treat it as a teaching problem, not a footgun to hide.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Claim first, then decide</h3>
+          <p>The inbox is durable. Pre-step cannot put claimed messages back. A rejected turn still exists. Inject after the claim misses this request. Unusually honest about what the model can still see.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Turn-stopping is data</h3>
+          <p><code>agent/turn-stopping</code> is serial and has no <code>next()</code>. Listeners object by steering. The machine re-reads the inbox. Listener order cannot close or keep the turn.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Guards are monotonic</h3>
+          <p>The pre-execute waterfall is reorderable. Owner policy that must not be reordered is <code>tools.guard()</code>. Later listeners cannot turn a denial back into permission. Hooks stay generic; identity-sensitive policy stays a guard.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Plan mode is a boolean fold</h3>
+          <p>They deleted a generic named-mode framework. <code>plan/mode: { active }</code> is a log event. Sandbox mode and approval are separate axes and do not read plan state. <code>exit_plan_mode</code> stays registered when inactive so tool schemas — and the KV cache — stay stable.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Three continuation policies, none in the loop</h3>
+          <p>Goals are same-session durable objectives. Ralph is a fresh child each round with the workspace as memory. Workflows are model-authored scripts over <code>agent()</code>. Typical products smash these into one “task mode.”</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Subagents can be other products</h3>
+          <p>Providers include spawn, fork, ACP, real Codex, real Claude Code, and out-of-process dsh. Delegation is not an <code>Agent</code> method. You can farm work to Claude Code without forking this loop.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Hooks are bridges</h3>
+          <p>The native surface is typed Cordis events. <code>hooks-claude-code</code> and <code>hooks-codex</code> translate existing <code>hooks.json</code> dialects onto that surface. Compatibility without making shell hooks the ontology.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Scopes are not sandboxes</h3>
+          <p>Per-agent visibility and lifetime, explicitly not authority. Security that must hold is approval, sandbox policy, and monotonic guards. Using scope as a permission system would be a category error the note forbids.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Typert is the API the model reads</h3>
+          <p>A compiler-independent type graph generated from host and client programs feeds docs, <code>cordis_inspect</code>, and the RPC gateway. The inspecting agent reads generated truth about the source, intersected with the live service store. Not a handwritten skills file of APIs.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Invariants check relationships, not presence</h3>
+          <p>Every workspace package publishes <code>./invariant</code>. A companion either checks an event or data relationship or is empty with a comment explaining why. Forbidden: “plugin name matches,” “method exists,” “pure function still returns 2.” A gate makes ownership exhaustive.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Complete prompt sections</h3>
+          <p>One <code>complete: true</code> section after assembly <em>is</em> the entire system prompt. Multiple complete sections reject assembly. Interpolation is strict: unknown variables throw. A lone <code>{{</code> with no closer passes through.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Model Experience is a README section</h3>
+          <p>Every package that can affect the model documents what the model sees, the token effect, and the KV-cache effect. Prefix stability is a design input, not an ops surprise.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>The agent may grow new fibers</h3>
+          <p><code>demo:cordis</code> is not a party trick. Because everything is a plugin, inspect and mount are the same algebra as boot. Temporary plugins are process memory, bash-equivalent trust, fully disposable. The surprising part is that disposal is already solved.</p>
+        </article>
+        <article class="idea">
+          <h3><span class="diamond-mark"></span>Pre-release honesty as versioning</h3>
+          <p><code>SESSION_FORMAT_VERSION</code> stays at 0. Rename freely. Backends reject old disks. No shims. The first tagged release is when this paragraph gets deleted from <code>AGENTS.md</code>.</p>
+        </article>
+        <p class="small">More of these live as Agent Notes under <code>.agents/notes/implemented/</code>. Archived notes are frozen history, never current authority.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

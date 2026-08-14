@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session log — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <aside class="tape-live" data-tape>
+          <h2>Live tape</h2>
+          <ol>
+            <li data-mark="truth">source of truth</li>
+            <li data-mark="surface">the surface</li>
+            <li data-mark="header">request header</li>
+            <li data-mark="version">format version</li>
+            <li data-mark="persist">persist and fork</li>
+            <li data-mark="project">projections</li>
+          </ol>
+        </aside>
+        <p class="kicker"><b>seq 0004</b> ctx.sessions · deriveMessages</p>
+        <h1>The log is the conversation. Messages are a fold.</h1>
+        <p class="lede">Fork, resume, transcripts, telemetry, titles, compaction, and the next model request all derive from one append-only stream. A second operative “conversation client” is the bug this design exists to make unrepresentable.</p>
+
+        <h2 id="truth">Model-visible means logged</h2>
+        <p>Anything that reaches a model request must be reconstructable from the session log and the immutable content-addressed attachments it names. The checkable consequence: anyone holding the log, those objects, and the pinned code version reconstructs every loop request. New model-visible input requires a new <code>SessionEventMap</code> member and a renderer from the log.</p>
+        <p>This is MiniCode's stateful conversation client, with the event log as the client. Prefix-cache stability is a corollary, not a cache manager: an append-only log projected by a per-node pure function yields requests that are append-extensions of their predecessors whenever the header is unchanged.</p>
+        <p class="pull">Divergence between “what the model saw” and “what we stored” is structurally unrepresentable. That is the whole point.</p>
+
+        <h2 id="surface">Surface versus tape</h2>
+        <p>Every event is on the tape. Only some events are on the <em>surface</em> that <code>deriveMessages()</code> walks. Surface-eligible types may carry <code>surfaceOp: 'append'</code> or <code>{ op: 'replace', start, end }</code>:</p>
+        <ul>
+          <li><code>user/message</code> — prompts, steering, injects, runtime-context snapshots, additional tool contexts.</li>
+          <li><code>assistant/message</code> — assembled assistant. Empty content is skipped in derivation and kept on the tape for usage and <code>sourceEventSeqs</code>.</li>
+          <li><code>tool/result</code> — the single model-facing outcome of a call.</li>
+        </ul>
+        <p>Not surface: <code>turn/*</code>, <code>step/*</code>, <code>assistant/chunk</code>, <code>tool/call</code>, <code>request/header</code>, <code>request/context</code>, inbox splices, <code>todo/write</code>, Code Mode <code>tool/code-dispatch*</code>. Chunks exist so a UI can replay token streams. The assembled message cites them. Compaction does not mutate history: it appends a replace that shadows a range. Those nodes drop out of derivation. The cache extends incrementally and rebuilds when <code>replaceGeneration</code> bumps.</p>
+
+        <h2 id="header">The header is the non-history envelope</h2>
+        <p><code>request/header</code> snapshots call config, rendered system prompt, and tool schemas. The first loop instance writes reason <code>initial</code>, a later instance writes <code>resume</code>, an in-instance change writes <code>change</code>. <code>foldRequestHeader</code> selects the latest snapshot. <code>request/context</code> records provider, model, and context window when the route or window changes.</p>
+        <p>Adapter-materialized defaults are marked. Before the next waterfall the loop strips marked fields so the current exact route rematerializes its own <code>maxTokens</code> and reasoning effort. Unmarked explicit settings persist across steps and route changes. A route with no adapter preserves the proposal so an <code>llm/stream</code> listener can short-circuit it; unhandled dispatch still fails <code>NO_ADAPTER</code>.</p>
+
+        <h2 id="version">Refuse loud, never gut silently</h2>
+        <p><code>SESSION_FORMAT_VERSION</code> is a monotonic integer, currently pinned at <code>0</code>. Pre-release: backends reject old on-disk formats, there is no compatibility promise, and vocabulary growth does not bump the version. Bump only for structural changes.</p>
+        <p>A <code>SessionEventMap</code> member is required-on-read by default. A build that does not know the type refuses the log unless the event carries <code>ignorable: true</code>. Default-required is inconvenient when someone forgets the marker. Default-ignorable would resume a gutted session. The design prefers inconvenience.</p>
+        <p>A newer-than-reader log throws <code>SessionFormatUnsupportedError</code> naming the direction. SQLite persistence uses its own monotonic <code>SCHEMA_VERSION</code>.</p>
+
+        <h2 id="persist">Persistence, fork, repair</h2>
+        <p>Persistence is a seam. JSONL and SQLite backends persist the same <code>SessionEvent</code> vocabulary. Apps choose a backend at composition time. Write-behind listens to <code>session/event</code>. <code>session/flush</code> is an explicit observation barrier.</p>
+        <p><code>ctx.sessions.fork(source, boundary?, childSessionId?)</code> copies a completed-turn prefix. Seed events and session metadata are validated and snapshotted because they cross the durable boundary. Resume loads through <code>ctx.sessionPersistence</code>, then runs unpublished setup against a fresh scope. Turn numbering continues. Temporary self-mounted plugins do not: they are process memory.</p>
+        <p>Crash repair and interrupted-turn markers belong to the persistence backends, not the loop. The session companion invariant checks monotonic seq, turn/step enclosure, and same-step tool call/result pairing.</p>
+
+        <h2 id="project">Everything else is a projection</h2>
+        <p>Titles fold the log through a sole <code>ctx.sessionTitle</code> provider, with a deterministic fallback. Session query offers exact reads, traces, filters, and a SQLite full-text backend. Projections register fold units; a cache checkpoints them so listings never load full logs. Telemetry captures, redacts, and hands records to one backend. Message feedback lives beside the log, not in it.</p>
+        <p>Goals, plan mode, permission presets, and todos all append their own event types and fold them back. The conversation vocabulary does not grow a special case for each of them.</p>
+        <p class="small">Homes: <code>packages/core/session</code>, <code>docs/subsystems/session.md</code>, Agent Notes on reconstructable requests and the session-log version mechanism.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Continuation — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <aside class="tape-live" data-tape>
+          <h2>Live tape</h2>
+          <ol>
+            <li data-mark="split">the split</li>
+            <li data-mark="goals">goals</li>
+            <li data-mark="ralph">Ralph</li>
+            <li data-mark="workflow">workflows</li>
+            <li data-mark="subagents">subagents</li>
+            <li data-mark="plan">plan</li>
+          </ol>
+        </aside>
+        <p class="kicker"><b>seq 0012</b> goals · ralph · workflow · subagents</p>
+        <h1>Continuation is policy. The loop only admits another turn.</h1>
+        <p class="lede">A goal is not Ralph. Ralph is not a workflow script. A workflow is not a subagent. Plan mode is not a sandbox. Each of these is a plugin on <code>agent/*</code>, the session log, or <code>ctx.subagents</code>.</p>
+
+        <h2 id="split">Four units people keep collapsing</h2>
+        <table>
+          <thead><tr><th>Unit</th><th>Memory</th><th>Who continues</th><th>Fresh agent?</th></tr></thead>
+          <tbody>
+            <tr><td>Turn / step</td><td>The session log</td><td>The loop, when tools or next-step input owe work</td><td>no</td></tr>
+            <tr><td>Goal round</td><td>The same conversation</td><td><code>goal-round-driver</code> through <code>agent/*</code></td><td>no</td></tr>
+            <tr><td>Ralph round</td><td>The workspace plus a bounded handoff</td><td>Fixed workflow over fresh children</td><td>yes</td></tr>
+            <tr><td>Workflow run</td><td>Whatever the script stores</td><td>Worker-thread engine calling <code>agent()</code></td><td>per call</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="goals">Goals stay in the session</h2>
+        <p>A goal is a durable completion objective attached to an existing session: revisioned phase <code>active</code> / <code>paused</code> / <code>blocked</code> / <code>complete</code>, plus a goal-round cap. <code>blocked</code> keeps a policy code and explanation. A goal is state, not a scheduler and not a separate conversation. The session log remains the source of truth.</p>
+        <p>A goal round is one continuation cycle admitted for the current goal, materialized as one goal-sourced turn. Unrelated human turns in the same session do not consume the cap. Activation is process-local, <code>armed</code> or <code>disarmed</code>, and deliberately absent from durable replay. Resume and fork require a later human-authorized resume through <code>/goal</code> or the model tool before automatic work. That is how a restored session does not immediately run away.</p>
+
+        <h2 id="ralph">Ralph is a fresh-agent loop</h2>
+        <p>Ralph is a model-facing tool policy composed from workflow and subagent primitives. One foreground run toward an immutable objective. Each round is a fresh child session that receives no parent or prior-child conversation seed. The shared workspace plus one bounded <code>RalphRoundReport</code> — status, summary, evidence, next steps, blocker text — carry cross-round state. Default cap is large (256 rounds). The provider must declare <code>inheritsParentContext: false</code>.</p>
+        <p>This is the opposite of a goal. A goal wants the conversation as memory. Ralph wants a clean context and a dirty workspace. Mixing them produces a child that inherits a parent prompt it cannot see the point of, or a same-session loop that pretends it started over.</p>
+
+        <h2 id="workflow">Workflows are scripts, not the loop</h2>
+        <p><code>ctx.workflowEngine</code> runs model-authored orchestration in a worker thread. Isolation from the host event loop is not a security boundary. The general <code>workflow</code> tool and the fixed Ralph consumer both start runs whose <code>agent()</code> calls fan out through <code>ctx.subagents</code>. There is no named-provider registry: one engine per context, as with bash.</p>
+
+        <h2 id="subagents">Delegation is a seam</h2>
+        <p>Providers: spawn-in-process, fork-in-process, ACP, Codex, Claude Code, out-of-process dsh via the TypeScript SDK. The service also owns optional Activation-based continuation. <code>tool-subagent</code> selects one-shot or continuable delegation. <code>tool-subagent-control</code> delivers follow-ups. Background children register with <code>ctx.jobs</code>; <code>job_*</code> collects or stops them.</p>
+        <p>Lineage is data — <code>parentSession</code>, durable <code>delegationDepth</code>, runtime <code>subagentDepth</code> — and never affects visibility. Scoped registrations do not inherit down to children. If a child needs a tool, give it the tool.</p>
+
+        <h2 id="plan">Plan is logged collaboration, not confinement</h2>
+        <p><code>ctx.planMode</code> folds <code>plan/mode</code> from the log, flushes user selections at turn boundaries, renders deployment-owned guidance, and registers <code>/plan</code>. Sandbox mode and approval policy do not read that boolean. Switching a permission preset writes one <code>permission/preset</code> event through to both knob events. The model can be in plan collaboration with workspace-write already on, or in full access with plan still active. Those combinations are allowed because the axes are independent.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

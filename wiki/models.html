@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Target models — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <aside class="tape-live" data-tape>
+          <h2>Live tape</h2>
+          <ol>
+            <li data-mark="targets">shipped targets</li>
+            <li data-mark="twins">twin adapters</li>
+            <li data-mark="think">thinking</li>
+            <li data-mark="select">selection</li>
+            <li data-mark="wire">wire diamonds</li>
+            <li data-mark="retry">retry and tokens</li>
+          </ol>
+        </aside>
+        <p class="kicker"><b>seq 0007</b> deepseek-official · deepseek-v4-flash</p>
+        <h1>The product is built against DeepSeek V4. Everyone else arrives through a dormant second adapter.</h1>
+        <p class="lede">Default conversation route: <code>provider: deepseek-official</code>, <code>model: deepseek-v4-flash</code>. The catalog also advertises <code>deepseek-v4-pro</code>. Both default to a 1,000,000-token context window and a 256,000-token output cap. Older names such as <code>deepseek-chat</code> and <code>deepseek-reasoner</code> survive only as test fixtures.</p>
+
+        <h2 id="targets">Why Flash and Pro</h2>
+        <table>
+          <thead><tr><th>Surface</th><th>Model</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Web / base bundle / Python SDK</td><td>V4 Flash</td><td>Cheap default. New-session picker.</td></tr>
+            <tr><td>ACP example live config</td><td>V4 Pro</td><td>Thinking enabled, effort <code>max</code>.</td></tr>
+            <tr><td>Headless example + snapshots</td><td>V4 Flash</td><td>Replay corpora stay on Flash when live ACP moves to Pro.</td></tr>
+            <tr><td>Web search (not conversation)</td><td>V4 Flash</td><td>Anthropic Messages + server tool <code>web_search_20250305</code>. Separate base URL env.</td></tr>
+          </tbody>
+        </table>
+        <p>The native catalog is advisory. Unlisted ids still pass through as the wire <code>model</code> string, so a company-hosted reasoner does not require a code change. <code>listModels('deepseek-official')</code> exists for the Web picker and ACP editors. Context capacity comes from the entry or from <code>defaultContextWindow</code>, not from treating the picker as authoritative.</p>
+        <p>Images are refused on the official chat-completions route. A custom pi-ai model is text-only until its <code>input</code> list says otherwise.</p>
+
+        <h2 id="twins">Twin adapters</h2>
+        <p>Anything the <code>StreamChunk</code> vocabulary cannot express for both adapters is a core bug. That is why there are two implementations of one seam.</p>
+        <table>
+          <thead><tr><th></th><th>Native <code>dsh-llm-deepseek</code></th><th>Generic <code>dsh-llm-pi-ai</code></th></tr></thead>
+          <tbody>
+            <tr><td>Route</td><td><code>deepseek-official</code></td><td><code>deepseek</code> plus any configured key</td></tr>
+            <tr><td>Transport</td><td>raw <code>fetch</code> + SSE</td><td><code>@earendil-works/pi-ai</code> <code>streamSimple</code></td></tr>
+            <tr><td>Catalog</td><td>advisory V4 pair; pass-through</td><td>authoritative; unknown model fails</td></tr>
+            <tr><td>Product mount</td><td>always on</td><td>dormant until settings add providers</td></tr>
+            <tr><td>Images</td><td>never</td><td>if the model declares <code>image</code></td></tr>
+            <tr><td>Replay state</td><td>none</td><td>instance-scoped <code>PiAiReplayState</code></td></tr>
+            <tr><td>Stop sequences</td><td>yes</td><td>rejected</td></tr>
+            <tr><td>Auth</td><td><code>DEEPSEEK_API_KEY</code> via credentials</td><td>per-route <code>apiKeyEnv</code>, or ambient only if no reference</td></tr>
+          </tbody>
+        </table>
+        <p>Both can be mounted at once because the route names differ. A private DeepSeek-dialect gateway on an unrecognized URL must set <code>compat.thinkingFormat: deepseek</code> or pi-ai will speak OpenAI at it.</p>
+        <p>pi-ai's installed catalog is how Anthropic, OpenAI, Kimi, xAI, Groq, and hand-declared OpenAI-compatible gateways appear. Bedrock, Vertex, Azure, and Codex need their native credentials; an API-key field does not configure them. OAuth-only catalog routes such as <code>openai-codex</code> are withheld from the configurable-provider directory because this adapter has no login flow.</p>
+
+        <h2 id="think">Reasoning is a content block, not a side channel</h2>
+        <p>Harness effort ids are opaque branded strings. Native DeepSeek advertises <code>off</code>, <code>high</code>, <code>max</code> on every pass-through model unless the deployment locks thinking. Omitted config defaults to <code>high</code>. <code>thinking: disabled</code> publishes only <code>off</code> and refuses <code>high</code>/<code>max</code> at load and at request time.</p>
+        <p>Adapter-owned <code>off</code> serializes as <code>thinking: { type: 'disabled' }</code> and never as <code>reasoning_effort: 'off'</code>. <code>high</code> and <code>max</code> enable thinking and send the official top-level <code>reasoning_effort</code>. Session-title requests force thinking off so a 64-token title budget is not eaten by chain-of-thought. Compaction keeps conversation thinking defaults and only adds <code>x-deepseek-harness-compact: 1</code>.</p>
+        <p>Official thinking-plus-tools requires a passback rule: on assistant history that carried tool calls, concatenate reasoning into <code>reasoning_content</code>. On tool-free turns, drop it. The first SSE thinking chunk is an empty string and must not open a block. Assistant <code>content</code> is <code>""</code>, never <code>null</code> — gateways reject null, and a reasoning-only greeting would 400 and brick the session.</p>
+        <p>pi-ai exposes whatever <code>getSupportedThinkingLevels</code> returns, including <code>minimal</code>, <code>low</code>, <code>medium</code>, <code>xhigh</code>. A model with no reasoning metadata exposes no reasoning field at all: offering <code>off</code> would be a no-op that can lie if the provider thinks by default. Reasoning tokens, when DeepSeek reports them, are a subdivision of output, not a fifth usage bucket. pi-ai folds them into output.</p>
+
+        <h2 id="select">Four layers hit the wire in this order</h2>
+        <ol>
+          <li><code>ctx.agentDefaultModel</code> — composition default, settings-writable, including optional effort. Headless and Host share this owner.</li>
+          <li>Session-local <code>ModelSelection</code> — a pick writes provider, model, and effort through <code>agent/request</code>. A session that already logged a request keeps its own model. Switching to a text-only model is refused if the log already holds images.</li>
+          <li><code>AgentOptions</code> seed the loop proposal. <code>agent/request</code> may fill a missing pair. After the waterfall, missing provider or model throws.</li>
+          <li>The adapter. Native pass-through versus pi-ai's closed catalog.</li>
+        </ol>
+        <p>Connection facts are not frozen at load. Both adapters re-read settings and credentials once per operation. An in-flight stream keeps the facts it started with. Keys are write-only; settings store references; values live in <code>$DSH_HOME/.credentials.yaml</code>. First-run onboarding is “browse models, store the key, prompt again,” with no restart.</p>
+
+        <h2 id="wire">Surprising wire facts</h2>
+        <ul>
+          <li>Streaming only. Usage is deferred until <code>[DONE]</code> so it always precedes <code>finish</code>.</li>
+          <li>DeepSeek <code>prompt_tokens</code> includes cache hits. Harness usage is disjoint: input minus cache-read. No cache-write metric.</li>
+          <li>SSE comments rearm the idle watchdog and never become chunks or log events.</li>
+          <li>Empty completed <code>stop</code> becomes <code>EMPTY_RESPONSE</code> and is retried by default policy.</li>
+          <li>Unknown <code>finish_reason</code>s such as <code>content_filter</code> become error finishes.</li>
+          <li>Native requests carry harness User-Agent, anonymous user id, optional session id, and the compact header when relevant.</li>
+          <li>Web search is a third DeepSeek HTTP dialect and does not go through <code>ctx.llm</code>.</li>
+          <li>An image admitted to the log before a failed vision request stays there. Recovery is another vision model, a fork, or a new session.</li>
+        </ul>
+
+        <h2 id="retry">Retry and tokens live outside the adapter</h2>
+        <p>One <code>stream()</code> call makes one provider request. SDK retries are forced to zero. <code>dsh-llm-retry</code> listens to <code>agent/request-error</code> and executes the policy captured on the route. Default <em>normal</em>: two retries for empty, rate-limit, server, timeout, transport; backoff 500ms–10s with jitter; DeepSeek <code>Retry-After</code> wins. Mode <em>always</em> retries every model-request failure after downstream recovery. Each wait logs non-surface <code>llm/retry</code>. The loop closes the failed turn and opens a new numbered turn over the same history.</p>
+        <p><code>ctx.tokenMeter</code> folds the durable log. Heuristic is 4 characters per token plus structure. Capacity comes from <code>resolveModelInfo().context</code>. Compaction scales thresholds against the routed model's window. Provider usage is reused only when the latest successful call's envelope still matches.</p>
+        <p class="small">Homes: <code>packages/llm/llm-deepseek</code>, <code>packages/llm/llm-pi-ai</code>, user guide <code>docs/user/guide/providers.md</code>, twin-adapters Agent Note.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Capability seams — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <aside class="tape-live" data-tape>
+          <h2>Live tape</h2>
+          <ol>
+            <li data-mark="trio">the trio</li>
+            <li data-mark="world">execution world</li>
+            <li data-mark="resolve">request / spec</li>
+            <li data-mark="catalog">selected keys</li>
+          </ol>
+        </aside>
+        <p class="kicker"><b>seq 0006</b> Service Definition · Provider · Consumer</p>
+        <h1>A seam is the whole capability, never one role.</h1>
+        <p class="lede">Cordis already answers “who provides versus who needs a service.” Package boundaries answer a slower question: the contract, the implementation, and the model-facing consumer change at different rates. Bundle them and swapping bash for a sandbox churns the schema the model sees.</p>
+
+        <h2 id="trio">Three roles</h2>
+        <ol>
+          <li><strong>Service Definition</strong> — the Cordis <code>Service</code> that owns <code>ctx.&lt;key&gt;</code> and the vocabulary types. An abstract class such as <code>ShellExecutor</code>, or a concrete registry such as <code>WebRuntime</code>. Never a TypeScript <code>interface</code>.</li>
+          <li><strong>Service Provider</strong> — a plugin that supplies or registers an implementation. <code>dsh-bash-local</code>, <code>dsh-bash-sandbox</code>, <code>dsh-fs-e2b</code>.</li>
+          <li><strong>Consumer</strong> — what the model and other plugins program against. <code>dsh-tool-bash</code> injects <code>ctx.shell</code> and never imports provider types.</li>
+        </ol>
+        <p>Roles normally occupy separate packages when they evolve independently. They stay folded when they are one concern: <code>dsh-llm</code> owns Definition and Consumer because the Consumer is the loop, not a swappable schema. Do not split preemptively.</p>
+        <p>The word <em>seam</em> is reserved for the trio. Name a constituent by its role, class, service, contract, or extension point. Confusing this with Cordis's permission service <code>@cordisjs/plugin-capability</code> is the trap the Agent Note exists to name.</p>
+
+        <h2 id="world">One execution world</h2>
+        <p>Filesystem and subprocess together define a path namespace and a process world. Bash, the PTY backend, and the LSP host consume those two interfaces. Point both at E2B and terminals plus language servers move with them. No provider forks. The host keeps the loop, the log, credentials, and the LLM. The remote world is ephemeral files and processes, not “the whole harness in a box.”</p>
+        <p>Sandbox is a third, narrower seam: consumers hand over the exact argv they are about to spawn; a backend wraps it under per-call policy. <code>ctx.sandboxPolicy</code> is the one home for default mode and workspace root so bash and fs cannot confine to different roots.</p>
+
+        <h2 id="resolve">Resolve, then run</h2>
+        <p>The shell template is the standing order at every package boundary. A caller submits a partial <code>ShellExecRequest</code>. The owning implementation <code>resolve</code>s it to a complete <code>ShellExecSpec</code> before execution. Defaulting is that step, never a hidden <code>??</code> inside <code>run()</code>. Deployment-varying choices are validated <code>Config</code> fields. Protocol constants and security invariants stay fixed. Misconfiguration fails loud.</p>
+
+        <h2 id="catalog">A curated walk of <code>ctx</code></h2>
+        <table>
+          <thead><tr><th>Key</th><th>Role</th><th>Why it exists</th></tr></thead>
+          <tbody>
+            <tr><td><code>ctx.sessions</code></td><td>core</td><td>Append-only store and durable feed.</td></tr>
+            <tr><td><code>ctx.systemPrompt</code></td><td>core</td><td>Sections, variables, tool schemas per step.</td></tr>
+            <tr><td><code>ctx.tools</code></td><td>core</td><td>Registry, pipeline, Code Mode transport.</td></tr>
+            <tr><td><code>ctx.agents</code></td><td>core</td><td>Live handles, factory seam, initiator scope.</td></tr>
+            <tr><td><code>ctx.agentLoop</code></td><td>bundle</td><td>The one concrete driver. Depend on <code>ctx.agents</code> instead.</td></tr>
+            <tr><td><code>ctx.llm</code></td><td>seam</td><td>Adapters register routes. Loop and compaction stream.</td></tr>
+            <tr><td><code>ctx.fs</code> / <code>ctx.subprocess</code></td><td>seam</td><td>The execution world.</td></tr>
+            <tr><td><code>ctx.shell</code> / <code>ctx.terminals</code></td><td>seam</td><td>Model-facing bash/PTY sit on those worlds.</td></tr>
+            <tr><td><code>ctx.sandbox</code></td><td>seam</td><td>Argv wrapping. Landlock, Seatbelt, bwrap, Windows ACL.</td></tr>
+            <tr><td><code>ctx.codeRuntime</code></td><td>seam</td><td>Program + bindings. Code Mode consumer is the registry.</td></tr>
+            <tr><td><code>ctx.subagents</code></td><td>seam</td><td>In-process, ACP, Codex, Claude Code, out-of-process dsh.</td></tr>
+            <tr><td><code>ctx.workflowEngine</code></td><td>seam</td><td>Model-authored scripts. Ralph is a fixed consumer.</td></tr>
+            <tr><td><code>ctx.jobs</code></td><td>seam</td><td>Background work. <code>job_*</code> is the controller.</td></tr>
+            <tr><td><code>ctx.web</code></td><td>seam</td><td>Search and fetch providers; stable tool names in the consumer.</td></tr>
+            <tr><td><code>ctx.lsp</code></td><td>seam</td><td>Four normalized operations. No protocol escape hatch.</td></tr>
+            <tr><td><code>ctx.skills</code></td><td>seam</td><td>Merged catalogs; <code>tool-skill</code> loads bodies.</td></tr>
+            <tr><td><code>ctx.compaction</code></td><td>seam</td><td>Pressure and overflow. No model-facing compact tool.</td></tr>
+            <tr><td><code>ctx.credentials</code> / <code>ctx.settings</code></td><td>seam</td><td>References, not secrets, in config. Per-operation resolve.</td></tr>
+            <tr><td><code>ctx.invariants</code></td><td>core</td><td>Package-owned relational checks. Not “the plugin exists.”</td></tr>
+            <tr><td><code>ctx.typert</code></td><td>core</td><td>Runtime type graph. Inspect and RPC drink from it.</td></tr>
+          </tbody>
+        </table>
+        <p>The generated graph in <code>docs/capability-seams.md</code> is exhaustive. This table is a reading order.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Package atlas — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <p class="kicker"><b>seq 0013</b> packages/ · @deepseek-ai/dsh-*</p>
+        <h1>A directory of groups, not a second module graph.</h1>
+        <p class="lede">The generated graph is <code>docs/module-graph.md</code>. This page is a reading map: what each group is for, and where a new behavior goes. npm names stay <code>@deepseek-ai/dsh-&lt;pkg&gt;</code> regardless of folder.</p>
+
+        <h2 id="boot">What boots</h2>
+        <p>Layers on an empty include: <code>dsh-base</code>, then the profile's other bundles (<code>dsh-web-app</code> or <code>dsh-headless</code>), then profile patch, home patch, <code>--patch</code>. Base inserts model adapters, default model selection, tools, persistence, policy, settings, credentials, telemetry, and host-level subagent providers. Codex and Claude Code providers load dormant. On Windows the same patch disables bash and mounts pwsh; on POSIX the inverse. Both families register <code>ctx.shell</code>, so an incomplete override fails loud.</p>
+        <p>Runnable leaves live under <code>examples/</code>. <code>pnpm dsh --profile headless "task"</code> runs from source through tsx's ESM hook. Modules that path reaches must stay ESM.</p>
+
+        <h2 id="groups">Groups</h2>
+        <table>
+          <thead><tr><th>Group</th><th>Owns</th></tr></thead>
+          <tbody>
+            <tr><td><code>core/</code></td><td>Session, system-prompt, tools, agent, default model, loop, scope.</td></tr>
+            <tr><td><code>llm/</code></td><td>Seam, DeepSeek adapter, pi-ai adapter, retry, token-meter.</td></tr>
+            <tr><td><code>fs/</code> <code>subprocess/</code> <code>shell/</code> <code>terminal/</code> <code>sandbox/</code></td><td>Execution world and confinement.</td></tr>
+            <tr><td><code>code-runtime/</code></td><td>Program + bindings. Worker-thread TypeScript backend.</td></tr>
+            <tr><td><code>lsp/</code> <code>skill/</code> <code>web/</code> <code>todo/</code></td><td>Model-facing capabilities on seams.</td></tr>
+            <tr><td><code>compaction/</code> <code>context/</code> <code>spill/</code></td><td>What the next request is allowed to weigh.</td></tr>
+            <tr><td><code>subagent/</code> <code>jobs/</code> <code>workflow/</code> <code>goal/</code> <code>schedule/</code></td><td>Other agents, background work, continuation.</td></tr>
+            <tr><td><code>plan/</code> <code>preset/</code> <code>guard/</code></td><td>Collaboration state, per-session composition, loop hygiene.</td></tr>
+            <tr><td><code>extensions/</code></td><td>Self-referential cordis tools and runners.</td></tr>
+            <tr><td><code>hooks/</code></td><td>Claude Code / Codex bridges and shared wire library.</td></tr>
+            <tr><td><code>session/</code> <code>session-query/</code></td><td>Persistence, projection, titles, telemetry, retrieval.</td></tr>
+            <tr><td><code>settings/</code> <code>credentials/</code> <code>storage/</code> <code>workspace/</code> <code>identity/</code> <code>attachment/</code></td><td>User facts that are not the conversation.</td></tr>
+            <tr><td><code>interaction/</code></td><td>Approval, permission presets, commands, ask-user.</td></tr>
+            <tr><td><code>sdk/</code> <code>acp/</code> <code>api/</code> <code>typert/</code></td><td>Out-of-process and typed remote faces.</td></tr>
+            <tr><td><code>boot/</code> <code>bundle/</code> <code>host/</code> <code>client/</code></td><td>App glue, profile layers, web host and browser halves.</td></tr>
+            <tr><td><code>e2b/</code></td><td>POC remote execution world.</td></tr>
+            <tr><td><code>examples/</code> <code>test-support/</code> <code>util/</code></td><td>Demo bundles, replay, branded ids.</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="where">Where new behavior goes</h2>
+        <table>
+          <thead><tr><th>Goal</th><th>Mechanism</th></tr></thead>
+          <tbody>
+            <tr><td>Add a model provider</td><td>Register an adapter on <code>ctx.llm</code>.</td></tr>
+            <tr><td>Add a model-facing capability</td><td>Register on <code>ctx.tools</code>; schema joins prompt assembly.</td></tr>
+            <tr><td>Give one session a different set</td><td>Compose an agent preset. A service row there needs an <code>isolate</code> realm.</td></tr>
+            <tr><td>Add shell or a PTY</td><td>Register <code>ctx.shell</code> or <code>ctx.terminals</code>; tools consume them.</td></tr>
+            <tr><td>Confine processes</td><td><code>ctx.sandbox</code> wraps argv. Policy lives on <code>ctx.sandboxPolicy</code>.</td></tr>
+            <tr><td>Intercept a request, tool, or turn</td><td><code>agent/*</code> or <code>tools/*</code>. Stop a turn from <code>agent/turn-stopping</code>.</td></tr>
+            <tr><td>Add model-facing context</td><td><code>agent.inject()</code>. Lands in the next admitted request.</td></tr>
+            <tr><td>Add durable state</td><td>Extend <code>SessionEventMap</code>. Render and replay from the log.</td></tr>
+            <tr><td>Add a human command</td><td><code>ctx.commands</code>. No model turn.</td></tr>
+            <tr><td>Add background work</td><td><code>ctx.jobs</code> plus <code>job_*</code>.</td></tr>
+            <tr><td>Add UI</td><td>Drive <code>ctx.agents</code>, render <code>session/event</code>, or register a conversation node.</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="faces">Three faces of the same tree</h2>
+        <div class="grid-3">
+          <article class="card">
+            <h3>Web</h3>
+            <p><code>npx @deepseek-ai/dsh web</code> or <code>pnpm dsh web</code>. Host API proxy plus a plugin-composed browser client. Default port 3080.</p>
+          </article>
+          <article class="card">
+            <h3>Headless / CLI</h3>
+            <p>One-shot runner, no server. ACP automation server for editors. JSON-RPC SDK and a Python package that speaks it.</p>
+          </article>
+          <article class="card">
+            <h3>The agent itself</h3>
+            <p>Source-launch through tsx. Snapshot tests replay assembled examples without a key. e2e talks to the real API when <code>DEEPSEEK_API_KEY</code> is set.</p>
+          </article>
+        </div>
+
+        <h2 id="docs">Official homes</h2>
+        <ul>
+          <li><code>docs/architecture.md</code> — the ordered map you read before changing <code>packages/</code>.</li>
+          <li><code>docs/subsystems/</code> — types, semantics, generated Cordis API regions.</li>
+          <li><code>docs/cookbook/</code> — adding a package, tool, adapter, or conversation node.</li>
+          <li><code>docs/user/</code> — product guides, including model configuration.</li>
+          <li><code>.agents/notes/implemented/</code> — why, what was given up, what pins the decision.</li>
+        </ul>
+        <p>This wiki is not those documents. It is a static atlas for walking the bets in one sitting. When a fact and a README disagree, the README and the generated catalogs win.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

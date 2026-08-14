@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diamonds in the code — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <p class="kicker"><b>seq 0009</b> fragments that carry an invariant</p>
+        <h1>Small functions that refuse a whole class of bugs.</h1>
+        <p class="lede">These are not clever tricks. They are places where a race, a desync, or a silent veto was made locally impossible. Line numbers move; the idea should not.</p>
+
+        <article class="diamond">
+          <h3>1. Claim is two pure deletions</h3>
+          <p><code>packages/core/agent/src/inbox.ts</code> — drain next-step, then at most one next-turn, then notify. Durable splice first. Claimed work cannot be put back by a listener.</p>
+          <pre><code>claim(target: InboxTarget, turn: number): UserMessage[] {
+  const claimed = this.mutate('next-step', 0, this.nextStep.length, [], false)
+  if (target === 'next-turn') {
+    claimed.push(...this.mutate('next-turn', 0, 1, [], false))
+  }
+  for (const message of claimed) this.notifications.claimed(message, turn)
+  return claimed
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>2. Classify wake before the insert</h3>
+          <p><code>agent-loop/src/agent.ts</code> — a splice observer can cancel reentrantly. Capture “waking after abort” first, force that item onto <code>next-turn</code>, then insert. The wake cannot be reclassified into the dying activity.</p>
+          <pre><code>const wakingAfterAbort = wakeup &amp;&amp; this.phase.kind !== 'idle'
+  &amp;&amp; this.phase.abort.signal.aborted
+const resolvedTarget = wakingAfterAbort ? 'next-turn' : target
+this.inbox.splice(resolvedTarget, Infinity, 0, [message])
+if (wakeup) this.wakeDriver(wakingAfterAbort)</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>3. <code>whenIdle</code> chases replacement drivers</h3>
+          <p>Latch replay can start a new <code>activityDone</code> while you await the old one. Loop until the promise you just awaited is still the current one.</p>
+          <pre><code>async whenIdle(): Promise&lt;void&gt; {
+  let activity: Promise&lt;void&gt;
+  do {
+    await (activity = this.activityDone)
+  } while (activity !== this.activityDone)
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>4. Turn-stopping, then a second read</h3>
+          <p>Serial checkpoint, no <code>next()</code>. Steer writes inbox data. The second emptiness check is the decision. Listener order is not a vote.</p>
+          <pre><code>if (turnEnds &amp;&amp; this.inbox.nextStep.length === 0) {
+  await this.dispatch.serial('agent/turn-stopping', { turn, signal })
+  signal.throwIfAborted()
+}
+if (turnEnds &amp;&amp; this.inbox.nextStep.length === 0) break
+target = 'next-step'</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>5. Strip adapter defaults so the next route rematerializes them</h3>
+          <p>A Flash default of <code>high</code> effort must not leak onto a model that has no reasoning. Marked fields are deleted from the proposal. Unmarked explicit settings persist.</p>
+          <pre><code>function requestProposal(header: EpochHeader): LlmCallConfig {
+  if (header.adapterDefaults === undefined) return header.config
+  const proposal = { ...header.config }
+  if (header.adapterDefaults.reasoningEffort === true) delete proposal.reasoningEffort
+  if (header.adapterDefaults.maxTokens === true) delete proposal.maxTokens
+  return proposal
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>6. Compaction is a splice of the surface</h3>
+          <p><code>session/src/surface.ts</code> — append pushes a seq. Replace splices a range and bumps <code>replaceGeneration</code>. There is no second history.</p>
+          <pre><code>if (plan?.kind === 'append') {
+  state.nodes.push(plan.seq)
+} else if (plan?.kind === 'replace') {
+  state.nodes.splice(plan.startIdx, plan.endIdx - plan.startIdx + 1, plan.seq)
+  state.replaceGeneration += 1
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>7. Empty assistant is logged, not derived</h3>
+          <p>Usage and <code>sourceEventSeqs</code> need a durable anchor. The provider transcript must not gain a content-less assistant turn.</p>
+          <pre><code>case 'assistant/message': {
+  if (event.data.message.content.length === 0) return null
+  return event.data.message
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>8. Only exact <code>true</code> overlaps</h3>
+          <p>Fail-closed concurrency. Throw, undefined, or a confused classifier becomes a barrier. Re-read immediately before start.</p>
+          <pre><code>executionMode(exec: ToolExecutionInput): ToolExecutionMode {
+  const tool = this.resolveExecution(exec.name, exec.agent, exec.parent !== undefined)
+  if (!tool?.isConcurrencySafe) return { kind: 'exclusive' }
+  try {
+    const concurrencySafe: unknown = tool.isConcurrencySafe(exec.arguments)
+    return concurrencySafe === true ? { kind: 'parallel' } : { kind: 'exclusive' }
+  } catch {
+    return { kind: 'exclusive' }
+  }
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>9. Abort writes a skip pair</h3>
+          <p>Skipped calls still get <code>tool/call</code> plus <code>ABORTED_BEFORE_DISPATCH</code>. The next derive remains a legal transcript. A scheduler crash, by contrast, fabricates nothing.</p>
+        </article>
+
+        <article class="diamond">
+          <h3>10. Fused dispatch owns the subject</h3>
+          <p><code>agent/src/dispatch.ts</code> spreads the payload first, then injects <code>agent</code>. A structurally acceptable payload cannot override the subject. Scope-filtered events stay honest.</p>
+          <pre><code>const fused = (payload) =&gt; ({ ...payload, agent })</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>11. Code Mode creates the wake before inspecting queues</h3>
+          <p>A settle or submission between the checks and the await cannot be lost. The same lost-wakeup discipline as a well-written actor loop, inside <code>run_code</code>.</p>
+          <pre><code>for (;;) {
+  const signal = new Promise((resolve) =&gt; { wake = resolve })
+  const commitHead = commitQueue[0]
+  if (commitHead !== undefined &amp;&amp; commitHead.settled) {
+    commitQueue.shift()
+    await commitHead.commit()
+    if (commitHead.mode === 'exclusive') exclusiveActive = false
+  }
+  // ...
+}</code></pre>
+        </article>
+
+        <article class="diamond">
+          <h3>12. Two JSON snapshots so a tool cannot desync the log</h3>
+          <p>Code Mode snapshots arguments once for dispatch and again for the durable record. Mutation of the dispatched object cannot rewrite what was logged. Lossless JSON or the call rejects.</p>
+        </article>
+
+        <article class="note">
+          <p><strong>Look also at</strong> <code>scopeTarget</code>'s compile-time carrier brand, <code>ToolExecutionToken</code> as a <code>Symbol</code>, dual-realm <code>instanceof</code> in the cordis vm façade, and the session companion that refuses a log whose tool results do not pair with calls. The defensive-patterns doc is a catalog of ways this repo has already been hurt.</p>
+        </article>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

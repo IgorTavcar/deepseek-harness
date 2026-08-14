@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plugin logic — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <aside class="tape-live" data-tape>
+          <h2>Live tape</h2>
+          <ol>
+            <li data-mark="five">five ideas</li>
+            <li data-mark="dispatch">dispatch modes</li>
+            <li data-mark="effects">effects</li>
+            <li data-mark="composition">profiles</li>
+            <li data-mark="presets">presets</li>
+            <li data-mark="scope">agent.ctx</li>
+            <li data-mark="rules">standing rules</li>
+          </ol>
+        </aside>
+        <p class="kicker"><b>seq 0003</b> vendor/cordis · spatiotemporal composability</p>
+        <h1>A plugin is a fiber. A registration is an effect. Unload is the same algebra as dispose.</h1>
+        <p class="lede">Cordis is the vendored kernel. Its paper is <em>A Programming Paradigm for Spatiotemporal Composability</em>. DeepSeek Harness takes that claim literally: the product is the tree you boot, and every contribution is bound to the lifetime of the fiber that installed it.</p>
+
+        <h2 id="five">Five ideas</h2>
+        <div class="grid-2">
+          <article class="idea">
+            <h3>A plugin implements Service</h3>
+            <p>A function with <code>inject</code> and <code>apply(ctx)</code>, or a <code>Service</code> subclass. There is no second kind of first-class module.</p>
+          </article>
+          <article class="idea">
+            <h3>A context is a service repository</h3>
+            <p>Plugins find <code>ctx.tools</code>, <code>ctx.llm</code>, <code>ctx.sessions</code> by key. They do not import a concrete loop or a concrete bash.</p>
+          </article>
+          <article class="idea">
+            <h3>inject is load order</h3>
+            <p>A plugin that names required services waits until those services exist. Boot sequencing is a dependency graph, not a handwritten list of <code>require</code>s.</p>
+          </article>
+          <article class="idea">
+            <h3>Typed events, four modes</h3>
+            <p>Declaration merging extends <code>SessionEventMap</code> and live maps. Dispatch is <code>emit</code>, <code>waterfall</code>, <code>parallel</code>, or <code>serial</code>. The mode is part of the public contract, tagged <code>@mode</code> so generated catalogs can check call sites.</p>
+          </article>
+        </div>
+        <article class="idea">
+          <h3>Registrations are reversible effects</h3>
+          <p>Prompt sections, tool schemas, adapters, providers, and listeners go through <code>ctx.effect()</code> or <code>ctx.on()</code>. A registry <code>register()</code> returns the disposer. HMR, preset unmount, agent disposal, and process shutdown unwind the same way. If teardown order matters, keep the related work in one effect.</p>
+        </article>
+
+        <h2 id="dispatch">Waterfalls are around-middleware</h2>
+        <p>A waterfall listener receives <code>(...args, next)</code>. Call <code>next()</code> to delegate the possibly wrapped result. Return without it to short-circuit. Values travel through <code>next()</code>'s return. Cooperative listeners mutate a shared decision object and then delegate. A listener can also replace the result so downstream only sees the replacement.</p>
+        <p><code>prepend: true</code> is for work that must run before ordinary registrations. For single-decision events, short-circuiting is the point: a policy that owns the decision skips <code>next()</code>; an observer that only annotates must not.</p>
+        <table>
+          <thead><tr><th>Mode</th><th>Awaited?</th><th>Order</th><th>Return</th></tr></thead>
+          <tbody>
+            <tr><td><code>emit</code></td><td>no</td><td>registration</td><td>none</td></tr>
+            <tr><td><code>waterfall</code></td><td>no</td><td>registration</td><td>yes, through <code>next()</code></td></tr>
+            <tr><td><code>parallel</code></td><td>yes</td><td>all at once</td><td>none</td></tr>
+            <tr><td><code>serial</code></td><td>yes</td><td>registration</td><td>yes, no <code>next()</code></td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="effects">The same unwind at every scale</h2>
+        <p>Unload a plugin and every effect it registered disappears. Dispose an agent and its scoped world, tools, listeners, and session detach to quiescence. Provider unload of <code>AgentLoop</code> stops and drains every live handle it made. Create and resume are one rollback-covered transaction: unpublished setup, then <code>enter</code>, then <code>session/created</code> then <code>agent/created</code>. A setup rejection never publishes either id.</p>
+        <p>The vendored loader is hardened for this product: transactional Include (import a candidate, await settle, restore on failure), serialized child-tree mutation so HMR cannot deadlock, and lazy <code>!!js</code> interpolation of <code>config</code> and <code>disabled</code> only after inject. Other entry metadata stays literal. Conditional composition uses overlays, not clever YAML.</p>
+
+        <h2 id="composition">Profiles are a patch algebra</h2>
+        <p>A running <code>dsh</code> starts from an empty entry list. Layers apply in order: each bundle in the profile, then the profile's <code>cordis.patch.yml</code>, then the home-level patch, then any <code>--patch</code> overlay. A patch targets a row by id and replaces its whole config, or inserts new rows.</p>
+        <p>A <strong>profile</strong> lives in the Harness home. It lists the bundles it stacks, holds out-of-tree plugins, and keeps the user's patch. <code>web</code> and <code>headless</code> ship as templates. A <strong>bundle</strong> is an npm package with <code>dsh.bundle</code> pointing at a patch file. <code>dsh-base</code> is the first layer of every profile: adapters, tools, persistence, sandbox, approval, settings, credentials, telemetry. <code>dsh-web-app</code> adds the browser application. <code>dsh-headless</code> adds a one-shot runner with no server.</p>
+        <pre><code>dsh --profile web --dump-config</code></pre>
+        <p>That command prints the tree <code>applyEntryPatches</code> would mount — the same function boot uses. Any printed row can be replaced by a patch of your own.</p>
+
+        <h2 id="presets">Per-session presets</h2>
+        <p>A preset is a directory with <code>agent.cordis.yml</code> mounted under the unpublished <code>setup(agentCtx)</code> window as a Cordis include subtree. The host plane stays process-global: registries, persistence, providers, the web server. The agent plane is what this session contributes. A preset row that publishes into the root service realm is rejected at mount. Resume rebuilds the composition recorded by <code>agent-preset/selected</code>, not today's default.</p>
+        <p>Isolation is the default. Sharing an expensive singleton is an explicit <code>isolate</code> realm, not an accident of import graphs.</p>
+
+        <h2 id="scope">The agent is a registration scope</h2>
+        <p><code>createScope(ctx, key)</code> mints a tagged context. Registrations through <code>agent.ctx</code> are visible to that agent and disposed with it. Two facts, one mechanism. Shadowing is most-specific-wins: a scoped tool or prompt section replaces its global twin for that agent alone. Restrictions filter the global tool set by intersection; scope-local tools merge afterwards. A filtered-away global is absent from the prompt and refuses execution, the same as a missing name.</p>
+        <p>Parent chain: registrations inherit down, events admit up. <code>scopeTarget</code> brands the dispatch <code>thisArg</code> so a bare subject is a compile error. Scopes route trusted same-process plugins. They are not sandboxes and not authority boundaries. That non-goal is written down so nobody “fixes” it into a security feature.</p>
+
+        <h2 id="rules">Standing rules that make the tree survivable</h2>
+        <ul>
+          <li>New behavior attaches to a documented extension point. Changing the loop updates <code>docs/architecture.md</code>.</li>
+          <li>Extension plugins depend on Service Definitions, never concrete providers.</li>
+          <li>Defaulting is an explicit <code>resolve(request): Spec</code> step. Hidden <code>?? default</code> inside <code>run()</code> is forbidden. The shell request/spec split is the template.</li>
+          <li>Deployment tunables are validated <code>Config</code> fields from <code>cordis.yml</code>. A <code>DEFAULT_*</code> constant is not configurability.</li>
+          <li>Misconfiguration fails loud at load when self-contained, otherwise at the earliest resolvable point.</li>
+          <li>Opaque ids are branded. <code>ToolExecutionToken</code> is a branded <code>Symbol</code> so it cannot leak onto the wire.</li>
+          <li>Trust TypeScript at typed same-process boundaries. Validate at parser, config, model/tool JSON, durable, worker, process, and wire edges.</li>
+        </ul>
+        <p class="small">Primer: <code>docs/cordis-primer.md</code>. Hands-on: <code>docs/cordis-tutorial/</code>. Vendoring procedure: <code>vendor/README.md</code>.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>
