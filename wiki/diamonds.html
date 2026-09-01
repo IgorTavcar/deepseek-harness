@@ -123,7 +123,7 @@ target = 'next-step'</code></pre>
         </article>
 
         <article class="diamond">
-          <h3>11. Code Mode creates the wake before inspecting queues</h3>
+          <h3>11. PTC creates the wake before inspecting queues</h3>
           <p>A settle or submission between the checks and the await cannot be lost. The same lost-wakeup discipline as a well-written actor loop, inside <code>run_code</code>.</p>
           <pre><code>for (;;) {
   const signal = new Promise((resolve) =&gt; { wake = resolve })
@@ -139,7 +139,7 @@ target = 'next-step'</code></pre>
 
         <article class="diamond">
           <h3>12. Two JSON snapshots so a tool cannot desync the log</h3>
-          <p>Code Mode snapshots arguments once for dispatch and again for the durable record. Mutation of the dispatched object cannot rewrite what was logged. Lossless JSON or the call rejects.</p>
+          <p>PTC snapshots arguments once for dispatch and again for the durable record. Mutation of the dispatched object cannot rewrite what was logged. Lossless JSON or the call rejects.</p>
         </article>
 
         <article class="note">

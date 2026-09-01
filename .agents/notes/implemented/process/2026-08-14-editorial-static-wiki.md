@@ -27,3 +27,5 @@ Serve it as static files (`python3 -m http.server --directory wiki`) or open `wi
 ## Consequences
 
 `wiki/` can drift from the code without a gate turning red. Authors who change a loop, seam, or model default must update official docs first; refreshing the wiki is optional editorial work, not a merge requirement. Reviewers should not treat wiki prose as a substitute for README or Agent Note contracts.
+
+The atlas is editioned. Kernel pages state the current sitting in the present tense. `wiki/whats-new.html` is the addenda of changes since the previous edition; a later sitting folds those lemmas into the body and starts a blank addenda. Official sources still win on conflict.

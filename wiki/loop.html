@@ -45,7 +45,7 @@
             <tr><td><code>inject</code></td><td><code>next-step</code></td><td>no</td><td>Context for the next admitted request. Waits.</td></tr>
           </tbody>
         </table>
-        <p><strong>Claim is the ownership transfer.</strong> At a turn boundary the driver drains every <code>next-step</code> item and then takes one <code>next-turn</code> message. Between steps it drains <code>next-step</code> only. Claimed messages never return. <code>agent/pre-step</code> then returns <code>reject</code> or <code>enter(messages)</code>. A rewrite to empty on the first claim still closes the turn.</p>
+        <p><strong>Claim is the ownership transfer.</strong> At a turn boundary the driver drains every <code>next-step</code> item and then takes one <code>next-turn</code> message. Between steps it drains <code>next-step</code> only. Claimed messages never return. <code>agent/pre-step</code> then returns <code>reject</code> or <code>enter(messages, startsRequestSeries?)</code>. A rewrite to empty on the first claim still closes the turn. Wrapping listeners spread the decision so a series flag survives.</p>
         <p>Every mutation publishes <code>agent/inbox/spliced</code> before the live arrays change. Insertions emit <code>agent/inbox/inserted</code>. Ordinary removals are cancellations. Claim is a pure deletion plus <code>agent/inbox/claimed { message, turn }</code>.</p>
 
         <h2 id="machine">The machine</h2>
@@ -56,7 +56,7 @@
             <div class="step" data-step><b>02</b><span>Append <code>turn/start</code> before claiming anything.</span></div>
             <div class="step" data-step><b>03</b><span>Claim: all next-step, plus one next-turn at the boundary.</span></div>
             <div class="step" data-step><b>04</b><span>Assemble prompt sections and tool schemas. Optionally mint a runtime-context snapshot.</span></div>
-            <div class="step" data-step><b>05</b><span><code>agent/pre-step</code> waterfall: reject, or enter the authoritative messages.</span></div>
+            <div class="step" data-step><b>05</b><span><code>agent/pre-step</code> waterfall: reject, or enter the authoritative messages. Optional <code>startsRequestSeries</code>.</span></div>
             <div class="step" data-step><b>06</b><span>On enter: <code>step/start</code>, append each entered message as <code>user/message</code>.</span></div>
             <div class="step" data-step><b>07</b><span>Derive history. <code>agent/request</code> then <code>prepareCall</code>. Log <code>request/header</code>.</span></div>
             <div class="step" data-step><b>08</b><span><code>llm/stream</code> → <code>assistant/chunk*</code> → one <code>assistant/message</code>.</span></div>
@@ -74,7 +74,7 @@
         </div>
 
         <h2 id="derive">The model never sees an invented array</h2>
-        <p>There is no parallel conversation client. After the entered user messages are appended, the driver calls <code>session.deriveMessages()</code>. That fold walks surface nodes: <code>user/message</code>, non-empty <code>assistant/message</code>, and <code>tool/result</code>. Chunks, tool calls, inbox splices, Code Mode sub-dispatches, and lifecycle events stay off the provider transcript.</p>
+        <p>There is no parallel conversation client. After the entered user messages are appended, the driver calls <code>session.deriveMessages()</code>. That fold walks surface nodes: <code>user/message</code>, non-empty <code>assistant/message</code>, and <code>tool/result</code>. Chunks, tool calls, inbox splices, PTC sub-dispatches, and lifecycle events stay off the provider transcript.</p>
         <p>Empty assistant messages are still logged. A max-tokens finish needs a durable usage anchor. <code>deriveMessages</code> skips empty content so the provider transcript stays well-formed.</p>
         <p>The optional <code>dsh-agent-loop/invariant</code> companion rebuilds the frozen request from a fresh <code>Session</code> at <code>llm/stream</code> and compares messages plus folded header fields. The live cache cannot vouch for itself.</p>
 
@@ -88,7 +88,7 @@
           <thead><tr><th>Event</th><th>Mode</th><th>Owns</th></tr></thead>
           <tbody>
             <tr><td><code>system-prompt/assemble</code></td><td>waterfall</td><td>Returned assembly. A <code>complete</code> section is the entire system prompt.</td></tr>
-            <tr><td><code>agent/pre-step</code></td><td>waterfall</td><td>Reject or the messages that enter the step.</td></tr>
+            <tr><td><code>agent/pre-step</code></td><td>waterfall</td><td>Reject, or enter messages. Optional <code>startsRequestSeries</code> opens a distinct model-message series.</td></tr>
             <tr><td><code>agent/request</code></td><td>waterfall</td><td>Call config only. Cannot mutate history.</td></tr>
             <tr><td><code>llm/stream</code></td><td>waterfall</td><td>The chunk iterable. Do not retry after emitting chunks.</td></tr>
             <tr><td><code>agent/request-error</code></td><td>waterfall</td><td><code>{ kind: 'retry' }</code> or the original failure remains terminal.</td></tr>

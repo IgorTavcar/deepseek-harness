@@ -20,8 +20,8 @@
         <p class="lede">The generated graph is <code>docs/module-graph.md</code>. This page is a reading map: what each group is for, and where a new behavior goes. npm names stay <code>@deepseek-ai/dsh-&lt;pkg&gt;</code> regardless of folder.</p>
 
         <h2 id="boot">What boots</h2>
-        <p>Layers on an empty include: <code>dsh-base</code>, then the profile's other bundles (<code>dsh-web-app</code> or <code>dsh-headless</code>), then profile patch, home patch, <code>--patch</code>. Base inserts model adapters, default model selection, tools, persistence, policy, settings, credentials, telemetry, and host-level subagent providers. Codex and Claude Code providers load dormant. On Windows the same patch disables bash and mounts pwsh; on POSIX the inverse. Both families register <code>ctx.shell</code>, so an incomplete override fails loud.</p>
-        <p>Runnable leaves live under <code>examples/</code>. <code>pnpm dsh --profile headless "task"</code> runs from source through tsx's ESM hook. Modules that path reaches must stay ESM.</p>
+        <p>Layers on an empty include: each bundle in the profile, then profile patch, home patch, <code>--patch</code>. <code>dsh-base</code> is the shared first layer of <code>web</code>, <code>headless</code>, <code>sdk</code>, and <code>acp</code>: adapters, default model, tools, persistence, policy, settings, credentials, telemetry, host-level subagent providers. <code>sdk-minimal</code> does not apply it. Codex and Claude Code providers load dormant. On Windows the same patch disables bash and mounts pwsh; on POSIX the inverse. Both families register <code>ctx.shell</code>, so an incomplete override fails loud. Base enables <code>web_search</code> and <code>web_fetch</code>; a stricter product overrides the row.</p>
+        <p>Every supported Node application starts at the <code>dsh</code> CLI with a named profile. <code>dsh web</code> is the alias for <code>--profile web</code>. The TypeScript SDK selects <code>sdk</code>. Python launches the same CLI. Runnable leaves live under <code>examples/</code>. <code>pnpm dsh --profile headless "task"</code> runs from source through tsx's ESM hook. Modules that path reaches must stay ESM.</p>
 
         <h2 id="groups">Groups</h2>
         <table>
@@ -32,18 +32,21 @@
             <tr><td><code>fs/</code> <code>subprocess/</code> <code>shell/</code> <code>terminal/</code> <code>sandbox/</code></td><td>Execution world and confinement.</td></tr>
             <tr><td><code>code-runtime/</code></td><td>Program + bindings. Worker-thread TypeScript backend.</td></tr>
             <tr><td><code>lsp/</code> <code>skill/</code> <code>web/</code> <code>todo/</code></td><td>Model-facing capabilities on seams.</td></tr>
-            <tr><td><code>compaction/</code> <code>context/</code> <code>spill/</code></td><td>What the next request is allowed to weigh.</td></tr>
-            <tr><td><code>subagent/</code> <code>jobs/</code> <code>workflow/</code> <code>goal/</code> <code>schedule/</code></td><td>Other agents, background work, continuation.</td></tr>
+            <tr><td><code>compaction/</code> <code>spill/</code></td><td>What the next request is allowed to weigh.</td></tr>
+            <tr><td><code>subagent/</code> <code>jobs/</code> <code>workflow/</code> <code>goal/</code> <code>schedule/</code> <code>webhook/</code></td><td>Other agents, background work, continuation, inbound Sessions.</td></tr>
             <tr><td><code>plan/</code> <code>preset/</code> <code>guard/</code></td><td>Collaboration state, per-session composition, loop hygiene.</td></tr>
             <tr><td><code>extensions/</code></td><td>Self-referential cordis tools and runners.</td></tr>
+            <tr><td><code>experimental/</code></td><td>Private prototypes: Agent Teams, Inspector, CPython runtime, browser-worker preview. Not in the release family.</td></tr>
             <tr><td><code>hooks/</code></td><td>Claude Code / Codex bridges and shared wire library.</td></tr>
-            <tr><td><code>session/</code> <code>session-query/</code></td><td>Persistence, projection, titles, telemetry, retrieval.</td></tr>
-            <tr><td><code>settings/</code> <code>credentials/</code> <code>storage/</code> <code>workspace/</code> <code>identity/</code> <code>attachment/</code></td><td>User facts that are not the conversation.</td></tr>
+            <tr><td><code>session/</code> <code>session-query/</code></td><td>Persistence, projection, titles, telemetry, retrieval, turn outline.</td></tr>
+            <tr><td><code>settings/</code> <code>credentials/</code> <code>storage/</code> <code>workspace/</code> <code>identity/</code> <code>attachment/</code></td><td>User facts that are not the conversation. Authorization asks a human.</td></tr>
+            <tr><td><code>feedback/</code></td><td>Human feedback capture and command.</td></tr>
+            <tr><td><code>context/</code></td><td>Workspace instructions, time, session and file references.</td></tr>
             <tr><td><code>interaction/</code></td><td>Approval, permission presets, commands, ask-user.</td></tr>
             <tr><td><code>sdk/</code> <code>acp/</code> <code>api/</code> <code>typert/</code></td><td>Out-of-process and typed remote faces.</td></tr>
             <tr><td><code>boot/</code> <code>bundle/</code> <code>host/</code> <code>client/</code></td><td>App glue, profile layers, web host and browser halves.</td></tr>
             <tr><td><code>e2b/</code></td><td>POC remote execution world.</td></tr>
-            <tr><td><code>examples/</code> <code>test-support/</code> <code>util/</code></td><td>Demo bundles, replay, branded ids.</td></tr>
+            <tr><td><code>examples/</code> <code>test-support/</code> <code>runtime-diagnostics/</code> <code>util/</code></td><td>Demo leaves at repo root, replay, invariants, branded ids.</td></tr>
           </tbody>
         </table>
 
@@ -61,6 +64,7 @@
             <tr><td>Add durable state</td><td>Extend <code>SessionEventMap</code>. Render and replay from the log.</td></tr>
             <tr><td>Add a human command</td><td><code>ctx.commands</code>. No model turn.</td></tr>
             <tr><td>Add background work</td><td><code>ctx.jobs</code> plus <code>job_*</code>.</td></tr>
+            <tr><td>Start a Session from a webhook</td><td>Register a trusted rule on <code>ctx.webhookRuntime</code> and mount a provider adapter.</td></tr>
             <tr><td>Add UI</td><td>Drive <code>ctx.agents</code>, render <code>session/event</code>, or register a conversation node.</td></tr>
           </tbody>
         </table>
@@ -72,8 +76,8 @@
             <p><code>npx @deepseek-ai/dsh web</code> or <code>pnpm dsh web</code>. Host API proxy plus a plugin-composed browser client. Default port 3080.</p>
           </article>
           <article class="card">
-            <h3>Headless / CLI</h3>
-            <p>One-shot runner, no server. ACP automation server for editors. JSON-RPC SDK and a Python package that speaks it.</p>
+            <h3>Headless / SDK / ACP</h3>
+            <p>One-shot runner, no server. JSON-RPC SDK and Python client both launch <code>dsh --profile sdk</code>. <code>sdk-minimal</code> is the explicit small tree. ACP is an automation server for editors.</p>
           </article>
           <article class="card">
             <h3>The agent itself</h3>

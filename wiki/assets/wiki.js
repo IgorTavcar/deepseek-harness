@@ -3,7 +3,7 @@ const PAGES = [
   { href: "loop.html", id: "loop", group: "Kernel", title: "The loop", seq: "0002" },
   { href: "plugins.html", id: "plugins", group: "Kernel", title: "Plugins", seq: "0003" },
   { href: "session.html", id: "session", group: "Kernel", title: "Session log", seq: "0004" },
-  { href: "tools.html", id: "tools", group: "Kernel", title: "Tools & Code Mode", seq: "0005" },
+  { href: "tools.html", id: "tools", group: "Kernel", title: "Tools & PTC", seq: "0005" },
   { href: "seams.html", id: "seams", group: "Kernel", title: "Capability seams", seq: "0006" },
   { href: "models.html", id: "models", group: "Aspects", title: "Target models", seq: "0007" },
   { href: "ideas.html", id: "ideas", group: "Aspects", title: "Surprising ideas", seq: "0008" },
@@ -12,6 +12,7 @@ const PAGES = [
   { href: "self.html", id: "self", group: "Aspects", title: "Self-modification", seq: "0011" },
   { href: "continuation.html", id: "continuation", group: "Aspects", title: "Continuation", seq: "0012" },
   { href: "atlas.html", id: "atlas", group: "Map", title: "Package atlas", seq: "0013" },
+  { href: "whats-new.html", id: "whats-new", group: "Apparatus", title: "What's new", seq: "0014" },
 ];
 
 function currentPage() {
@@ -40,7 +41,7 @@ function renderRail() {
     <a class="brand" href="index.html">
       <small>DeepSeek Harness</small>
       <strong>Event ledger</strong>
-      <em>wiki · static atlas</em>
+      <em>wiki · edition 2</em>
     </a>
     <div class="rail-tools">
       <button class="menu-btn" type="button" data-menu>Pages</button>

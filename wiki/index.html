@@ -20,6 +20,7 @@
         <h1>Everything is a plugin. The conversation is a log.</h1>
         <p class="lede">DeepSeek Harness is not a ReAct script with a plugin folder stapled on. It is a Cordis fiber tree whose loop, model adapter, tools, session, UI, and even the agent that rewrites the runtime are the same kind of thing.</p>
         <div class="meta-row">
+          <span class="chip"><i></i> edition 2 · 0.1.2-alpha.4</span>
           <span class="chip"><i></i> developer preview</span>
           <span class="chip"><i></i> MIT · DeepSeek AI</span>
           <span class="chip"><i></i> target: V4 Flash / V4 Pro</span>
@@ -63,8 +64,8 @@
           <article class="card">
             <a class="cover" href="tools.html">
               <div class="seq">seq 0005</div>
-              <h3>Tools and Code Mode</h3>
-              <p>A guarded pipeline, monotonic owner policy, canonical JSON values that never hit the log, and a reserved <code>run_code</code> transport so the model can write TypeScript against a generated SDK.</p>
+              <h3>Tools and PTC</h3>
+              <p>A guarded pipeline, monotonic owner policy, canonical JSON values that never hit the log, and a reserved <code>run_code</code> transport so the model can write TypeScript against a generated PTC SDK.</p>
             </a>
           </article>
           <article class="card">
@@ -123,10 +124,17 @@
               <p>The group map, the base bundle, profiles, presets, and where new behavior attaches. Use this when you already know the story and need the directory.</p>
             </a>
           </article>
+          <article class="card">
+            <a class="cover" href="whats-new.html">
+              <div class="seq">seq 0014</div>
+              <h3>What's new</h3>
+              <p>Addenda since edition 1. The body already states present tense. This page is the slip of paper that a later sitting will fold into the alphabet.</p>
+            </a>
+          </article>
         </div>
 
         <h2 id="how-to-read">How to read this</h2>
-        <p>Start with the <a href="loop.html">loop</a> if you want the machine. Start with <a href="plugins.html">plugins</a> if you want the ontology. Start with <a href="models.html">models</a> if you came to see what DeepSeek actually ships against. The official map is <code>docs/architecture.md</code>; the event catalogs, tool schemas, and config fields are generated and gated. This site quotes them, it does not replace them.</p>
+        <p>Start with the <a href="loop.html">loop</a> if you want the machine. Start with <a href="plugins.html">plugins</a> if you want the ontology. Start with <a href="models.html">models</a> if you came to see what DeepSeek actually ships against. If you read edition 1, start with <a href="whats-new.html">what's new</a>. The official map is <code>docs/architecture.md</code>; the event catalogs, tool schemas, and config fields are generated and gated. This site quotes them, it does not replace them.</p>
         <p>Open the files from disk, or serve the folder:</p>
         <pre><code>python3 -m http.server --directory wiki 4173</code></pre>
         <nav class="footer-nav" data-next></nav>

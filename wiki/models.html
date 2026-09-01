@@ -84,7 +84,8 @@
           <li>Empty completed <code>stop</code> becomes <code>EMPTY_RESPONSE</code> and is retried by default policy.</li>
           <li>Unknown <code>finish_reason</code>s such as <code>content_filter</code> become error finishes.</li>
           <li>Native requests carry harness User-Agent, anonymous user id, optional session id, and the compact header when relevant.</li>
-          <li>Web search is a third DeepSeek HTTP dialect and does not go through <code>ctx.llm</code>.</li>
+          <li>Web search is a third DeepSeek HTTP dialect and does not go through <code>ctx.llm</code>. Base also enables anonymous <code>web_fetch</code>.</li>
+          <li>Optional <code>dsh-session-log-deepseek</code> can attach a Session-log suffix to official requests. Default is off.</li>
           <li>An image admitted to the log before a failed vision request stays there. Recovery is another vision model, a fork, or a new session.</li>
         </ul>
 

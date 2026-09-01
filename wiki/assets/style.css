@@ -632,6 +632,59 @@ pre code {
   color: var(--ink-soft);
 }
 
+.edition-block {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1.7rem;
+  padding: 0.85rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.edition-block b {
+  color: var(--copper);
+  font-weight: 500;
+}
+
+.lemma {
+  display: grid;
+  grid-template-columns: 3.6rem minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+  margin: 0 0 0.2rem;
+  padding: 1rem 0 1.05rem;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.lemma .siglum {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--copper);
+  padding-top: 0.28rem;
+}
+
+.lemma h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.08rem;
+}
+
+.lemma p:last-child {
+  margin-bottom: 0;
+}
+
+.lemma-group {
+  margin: 2rem 0 0.4rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -673,7 +726,8 @@ pre code {
   .grid-3,
   .cards,
   .grid-2,
-  .toc {
+  .toc,
+  .lemma {
     grid-template-columns: 1fr;
     columns: 1;
   }

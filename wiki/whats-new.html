@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What's new — DeepSeek Harness wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail" data-rail></aside>
+    <main class="page" id="main">
+      <article class="article">
+        <aside class="tape-live" data-tape>
+          <h2>Live tape</h2>
+          <ol>
+            <li data-mark="convention">the convention</li>
+            <li data-mark="ladder">release ladder</li>
+            <li data-mark="corrigenda">corrigenda</li>
+            <li data-mark="addenda">addenda</li>
+            <li data-mark="deferred">left in the appendix</li>
+          </ol>
+        </aside>
+        <p class="kicker"><b>seq 0014</b> apparatus · addenda to edition 2</p>
+        <h1>The body is the current sitting. This page is the slip of paper tucked in the back.</h1>
+        <p class="lede">A lexicon reprints the dictionary, then lists what arrived after the last press. Next edition the list disappears into the alphabet. Until then, read the body for truth and this page for what moved.</p>
+
+        <div class="edition-block">
+          <div><b>edition 2</b> · 2026-09-01 · tree <code>0.1.2-alpha.4</code></div>
+          <div><b>edition 1</b> · 2026-08-14 · tree <code>0.1.0-rc.7</code></div>
+          <div>range: ~2470 upstream commits · tags <code>dsh-v0.1.0-rc.8</code> … <code>dsh-v0.1.2-alpha.4</code></div>
+        </div>
+
+        <h2 id="convention">How this page is supposed to die</h2>
+        <p>The kernel pages state present tense. They do not say “formerly Code Mode.” They say PTC, because that is the name the registry owns. This apparatus is the only page allowed to talk about the interval.</p>
+        <p>A later sitting folds every lemma below into the body — or drops it if the body already carries the fact — and starts a blank addenda. Until that sitting, a reader who still has edition 1 in their head can walk the list instead of rereading the atlas.</p>
+        <p>Official contracts still win on conflict: <code>docs/architecture.md</code>, package READMEs, generated catalogs, implemented Agent Notes. This page is a reading aid, not a changelog of 2470 commits.</p>
+
+        <h2 id="ladder">Release ladder in this interval</h2>
+        <table>
+          <thead><tr><th>Tag</th><th>Channel</th></tr></thead>
+          <tbody>
+            <tr><td><code>dsh-v0.1.0-rc.7</code></td><td>Edition 1 floor. Last wiki sync.</td></tr>
+            <tr><td><code>dsh-v0.1.0-rc.8</code></td><td>0.1.0 release-candidate tail.</td></tr>
+            <tr><td><code>dsh-v0.1.1-rc.1</code>, <code>rc.2</code></td><td>0.1.1 candidates.</td></tr>
+            <tr><td><code>dsh-v0.1.2-alpha.1</code> … <code>alpha.4</code></td><td>Current tree. Developer preview, no compatibility promise.</td></tr>
+          </tbody>
+        </table>
+        <p><code>SESSION_FORMAT_VERSION</code> is still <code>0</code>. Pre-release honesty did not expire. Backends still reject a foreign disk. Vocabulary growth still uses <code>ignorable</code>, not a bump.</p>
+
+        <p class="lemma-group" id="corrigenda">Corrigenda — edition 1 said this; the body no longer does</p>
+
+        <article class="lemma">
+          <div class="siglum">C1</div>
+          <div>
+            <h3>The presentation mode is <code>ptc</code>, not <code>code</code></h3>
+            <p>Edition 1 called the reserved <code>run_code</code> transport “Code Mode” and wrote <code>tools.mode</code> as <code>native | code | both</code>. The registry’s closed union is <code>native | ptc | both</code>. Cloudflare’s essay still names the observation; the product name is PTC. Durable sub-dispatch events keep the historical types <code>tool/code-dispatch-start</code> / <code>tool/code-dispatch</code>. The live waterfall is <code>tools/ptc-dispatch-log</code>.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">C2</div>
+          <div>
+            <h3><code>dsh-base</code> is not the first layer of every profile</h3>
+            <p>Edition 1 said every profile stacks <code>dsh-base</code>. <code>web</code>, <code>headless</code>, <code>sdk</code>, and <code>acp</code> do. <code>sdk-minimal</code> is the deliberate exception: one bundle owns its complete explicit tree and does not apply base.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">C3</div>
+          <div>
+            <h3>Shipped templates are five, not two</h3>
+            <p>Edition 1 named <code>web</code> and <code>headless</code>. The architecture map now ships <code>web</code>, <code>headless</code>, <code>sdk</code>, <code>sdk-minimal</code>, and <code>acp</code>. Custom profiles default to live patch reload. Shipped <code>web</code> is live; the one-shot and stdio profiles apply layers once at startup.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">C4</div>
+          <div>
+            <h3><code>request/header</code> has a fourth reason</h3>
+            <p>Edition 1 listed <code>initial</code>, <code>resume</code>, and <code>change</code>. An enter decision may now set <code>startsRequestSeries</code>. The loop then logs reason <code>series</code>, or <code>change</code> carrying <code>startsSeries: true</code> when the envelope changed too. Wrapping <code>agent/pre-step</code> listeners must spread the decision so the flag survives.</p>
+          </div>
+        </article>
+
+        <p class="lemma-group" id="addenda">Addenda — new facts the body now carries</p>
+
+        <article class="lemma">
+          <div class="siglum">A1</div>
+          <div>
+            <h3>Every supported Node application starts at <code>dsh</code></h3>
+            <p>There is no second executable for the SDK, and no inline Cordis tree from a caller. <code>dsh web</code> is the alias for <code>--profile web</code>. The TypeScript SDK resolves its same-version <code>dsh</code> and selects <code>sdk</code>. Python’s runtime wheel packages that CLI and launches <code>dsh --profile sdk</code> with an explicit Harness home. Persistent external plugins install through <code>dsh plugin</code>. A gate refuses a Node application path that bypasses this launcher. The private browser WebWorker preview is not a launcher.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A2</div>
+          <div>
+            <h3>Projections are a required host seam</h3>
+            <p><code>dsh-session-projection</code> owns <code>ctx.sessionProjections</code>. Host readers require the registry and the key, or they fail at activation or first access. They read one typed state with <code>stateOf()</code>. Carriers batch cropped client views with <code>snapshot()</code>. Host fold state and client views are independently typed. The agent loop registers shared <code>turnBoundary</code> state. The web turn rail reads a whole-log <code>turnOutline</code> unit so paging does not require the entire event body.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A3</div>
+          <div>
+            <h3>Event identities are not log offsets</h3>
+            <p><code>SessionSeq</code> names an existing event. <code>SessionLogOffset</code> names a gap, prefix length, or read cut and may equal the event count. The compiler refuses to interchange them. The logical header carries <code>isSeeded</code> rather than a numeric seed cut; body-bearing observations keep <code>inheritedEventCount</code>. On-disk v0 JSONL stays byte-compatible. Public wires still carry ordinary numbers; adapters brand at the same-process edge.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A4</div>
+          <div>
+            <h3>Webhooks start ordinary Sessions and then forget them</h3>
+            <p><code>ctx.webhookRuntime</code> is a capability on the architecture map. A trusted rule returns <code>null</code> or one Workspace-backed Session request. Dispatch is process-local and fire-and-forget: no delivery database, queue, retry, or Agent-completion state. <code>dsh-webhook-github</code> verifies <code>X-Hub-Signature-256</code> on an isolated WebServer so the webhook port need not expose <code>/api</code>. A 202 means verified in-memory dispatch, not “the Agent finished.”</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A5</div>
+          <div>
+            <h3>Agent Teams incubate outside the release family</h3>
+            <p><code>packages/experimental/</code> is a group with mechanical exclusion from pack and publish. Agent Teams is a private opt-in on <code>ctx.agentTeams</code>: a durable roster, mailbox, and compare-and-set task board over continuable children. The default tool catalog does not change. Released products must not depend on experimental packages. Promotion is a rename, not a flag.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A6</div>
+          <div>
+            <h3>The PTC preset hides the general <code>workflow</code> tool</h3>
+            <p>The shipped <code>ptc</code> preset sets <code>mode: ptc</code> and disables <code>tool-workflow</code> so the model does not get a second orchestration surface beside <code>run_code</code>. The worker-thread engine and Ralph stay mounted. <code>standard</code> and <code>cordis</code> still publish <code>workflow</code>.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A7</div>
+          <div>
+            <h3>Base enables <code>web_fetch</code></h3>
+            <p>Shared <code>dsh-base</code> mounts <code>dsh-tool-web</code> with <code>fetch: true</code>. Search stays DeepSeek-official; fetch is anonymous HTTP(S) with destination pinning. Products with a stricter network policy override the row. The web app still composes the tool per agent preset rather than as a host singleton.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A8</div>
+          <div>
+            <h3><code>@file</code> mentions are a seam, not an attachment</h3>
+            <p><code>ctx.fileReferences</code> offers path candidates. Picking one inserts mention text. It does not read the file. The model still has to call a filesystem tool. A local provider ranks against the agent’s working directory. Session Controller exposes <code>fileReferences/list</code> to the browser.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A9</div>
+          <div>
+            <h3>Official DeepSeek can take a Session-log suffix</h3>
+            <p><code>dsh-session-log-deepseek</code> is mounted dormant. When enabled it owns the <code>dsh_session_log</code> request field and an acceptance watermark. Upload is at-least-once. Forks ignore inherited parent watermarks. Direct requests without a live Session omit the field.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A10</div>
+          <div>
+            <h3>Authorization is a conversation with a human</h3>
+            <p><code>dsh-authorization</code> registers flows that configuration cannot supply: sign-in, a pasted code, a question. An attempt reports <code>authorized</code> only after the credential record commits. A withdrawn attempt is <code>cancelled</code>, not an error. Headless may mount the package; nothing asks unless a plugin registered a flow.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A11</div>
+          <div>
+            <h3>External informational events may carry <code>ignorable: true</code></h3>
+            <p>First-party <code>Session.append</code> still does not set the marker. A repository-external plugin is an allowed consumer. An unknown required event still refuses resume. Default-required remains the failure mode the design prefers.</p>
+          </div>
+        </article>
+        <article class="lemma">
+          <div class="siglum">A12</div>
+          <div>
+            <h3>Demo bundles left <code>packages/examples</code></h3>
+            <p>Runnable leaves live under repo-root <code>examples/</code>. The workspace group that used to hold them is gone. Profile bundles <code>dsh-web-app</code>, <code>dsh-headless</code>, <code>dsh-sdk-app</code>, <code>dsh-sdk-minimal</code>, and <code>dsh-acp-app</code> live under <code>packages/bundle/</code>.</p>
+          </div>
+        </article>
+
+        <h2 id="deferred">Left in this appendix on purpose</h2>
+        <p>Not every interval change is a bet. Chat scroll throttling, keyed conversation sources, superellipse corners, Safari textarea reflow, and SQLite physical chunk compression belong in package notes and UI snapshots. They do not rewrite the ontology. Edition 3 should not grow kernel pages for them unless a later change makes one of them load-bearing.</p>
+        <p>Experimental Inspector, CPython <code>code-runtime</code>, and the browser-worker preview are real and private. The atlas names the group. They stay out of the kernel pages until promotion.</p>
+        <p class="small">Homes for the lemmas: <code>docs/architecture.md</code>, <code>packages/core/tools</code>, <code>packages/webhook</code>, <code>packages/experimental</code>, and the Agent Notes on projections, seq brands, fire-and-forget webhooks, and experimental package exclusion.</p>
+        <nav class="footer-nav" data-next></nav>
+      </article>
+    </main>
+  </div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

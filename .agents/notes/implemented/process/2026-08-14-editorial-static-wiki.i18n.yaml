@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/process/2026-08-14-editorial-static-wiki.md
-2026-08-14-editorial-static-wiki.md: 73a9eaa806889abf21e0f1cc281de227e9bd14d4
-2026-08-14-editorial-static-wiki.zh.md: 609abf1a4debab33a040200be96ad73455226c74
+2026-08-14-editorial-static-wiki.md: 48b7e234cab811e507e4d1561460135aa17fb25b
+2026-08-14-editorial-static-wiki.zh.md: dbd07f599b1ad0ecb911de61045887ac35b35045

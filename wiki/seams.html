@@ -50,18 +50,22 @@
           <tbody>
             <tr><td><code>ctx.sessions</code></td><td>core</td><td>Append-only store and durable feed.</td></tr>
             <tr><td><code>ctx.systemPrompt</code></td><td>core</td><td>Sections, variables, tool schemas per step.</td></tr>
-            <tr><td><code>ctx.tools</code></td><td>core</td><td>Registry, pipeline, Code Mode transport.</td></tr>
+            <tr><td><code>ctx.tools</code></td><td>core</td><td>Registry, pipeline, PTC transport.</td></tr>
             <tr><td><code>ctx.agents</code></td><td>core</td><td>Live handles, factory seam, initiator scope.</td></tr>
             <tr><td><code>ctx.agentLoop</code></td><td>bundle</td><td>The one concrete driver. Depend on <code>ctx.agents</code> instead.</td></tr>
             <tr><td><code>ctx.llm</code></td><td>seam</td><td>Adapters register routes. Loop and compaction stream.</td></tr>
             <tr><td><code>ctx.fs</code> / <code>ctx.subprocess</code></td><td>seam</td><td>The execution world.</td></tr>
             <tr><td><code>ctx.shell</code> / <code>ctx.terminals</code></td><td>seam</td><td>Model-facing bash/PTY sit on those worlds.</td></tr>
             <tr><td><code>ctx.sandbox</code></td><td>seam</td><td>Argv wrapping. Landlock, Seatbelt, bwrap, Windows ACL.</td></tr>
-            <tr><td><code>ctx.codeRuntime</code></td><td>seam</td><td>Program + bindings. Code Mode consumer is the registry.</td></tr>
+            <tr><td><code>ctx.codeRuntime</code></td><td>seam</td><td>Program + bindings. PTC consumer is the registry.</td></tr>
             <tr><td><code>ctx.subagents</code></td><td>seam</td><td>In-process, ACP, Codex, Claude Code, out-of-process dsh.</td></tr>
             <tr><td><code>ctx.workflowEngine</code></td><td>seam</td><td>Model-authored scripts. Ralph is a fixed consumer.</td></tr>
             <tr><td><code>ctx.jobs</code></td><td>seam</td><td>Background work. <code>job_*</code> is the controller.</td></tr>
-            <tr><td><code>ctx.web</code></td><td>seam</td><td>Search and fetch providers; stable tool names in the consumer.</td></tr>
+            <tr><td><code>ctx.web</code></td><td>seam</td><td>Search and fetch providers; stable tool names. Base enables <code>web_fetch</code>.</td></tr>
+            <tr><td><code>ctx.webhookRuntime</code></td><td>seam</td><td>Trusted rules. Fire-and-forget Workspace Sessions from signed deliveries.</td></tr>
+            <tr><td><code>ctx.sessionProjections</code></td><td>seam</td><td>Required host fold registry. <code>stateOf</code> for readers; cropped <code>snapshot</code> for carriers.</td></tr>
+            <tr><td><code>ctx.fileReferences</code></td><td>seam</td><td><code>@file</code> completion. Inserts mention text; does not read the file.</td></tr>
+            <tr><td><code>ctx.agentTeams</code></td><td>experimental</td><td>Private roster, mailbox, task board over continuable children. Not in the release family.</td></tr>
             <tr><td><code>ctx.lsp</code></td><td>seam</td><td>Four normalized operations. No protocol escape hatch.</td></tr>
             <tr><td><code>ctx.skills</code></td><td>seam</td><td>Merged catalogs; <code>tool-skill</code> loads bodies.</td></tr>
             <tr><td><code>ctx.compaction</code></td><td>seam</td><td>Pressure and overflow. No model-facing compact tool.</td></tr>

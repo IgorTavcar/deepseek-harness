@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tools and Code Mode — DeepSeek Harness wiki</title>
+  <title>Tools and PTC mode — DeepSeek Harness wiki</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,520;12..96,680;12..96,720&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
@@ -21,13 +21,13 @@
             <li data-mark="pipeline">pipeline</li>
             <li data-mark="output">canonical output</li>
             <li data-mark="cards">UI cards</li>
-            <li data-mark="code">Code Mode</li>
+            <li data-mark="code">PTC mode</li>
             <li data-mark="runtime">code-runtime</li>
           </ol>
         </aside>
         <p class="kicker"><b>seq 0005</b> ctx.tools · run_code</p>
         <h1>The registry owns visibility, execution, and how the model is allowed to call.</h1>
-        <p class="lede">A tool is a typed definition, a guarded pipeline, a canonical JSON value that never hits the log, and a pure card the UI can replay. Code Mode is not a second product. It is a presentation mode of the same registry.</p>
+        <p class="lede">A tool is a typed definition, a guarded pipeline, a canonical JSON value that never hits the log, and a pure card the UI can replay. PTC mode is not a second product. It is a presentation mode of the same registry.</p>
 
         <h2 id="pipeline">The pipeline, in order</h2>
         <div class="figure">
@@ -49,28 +49,28 @@
 
         <h2 id="output">Canonical value versus model-facing content</h2>
         <p>Every definition must declare <code>output: { schema, render, presentationMeta? }</code>. The body returns only the canonical JSON value. The registry snapshots, validates, freezes, then renders content. Post-execute may replace <code>content</code> or <code>value</code>, never both. Value replacement revalidates and rerenders. Content replacement is not a confidentiality boundary: block or replace the value when programmatic consumers must not receive it.</p>
-        <p>Canonical values are execution-local. They never enter the session log. Replay reconstructs presentation, not the DTO. That split is why Code Mode can return typed <code>ToolOutputMap</code> values inside a worker without bloating history.</p>
+        <p>Canonical values are execution-local. They never enter the session log. Replay reconstructs presentation, not the DTO. That split is why PTC can return typed <code>ToolOutputMap</code> values inside a worker without bloating history.</p>
 
         <h2 id="cards">Tools own their cards</h2>
         <p><code>presentCall</code> and <code>presentResult</code> return a closed union: <code>generic</code>, <code>terminal</code>, <code>diff</code>, and result-only <code>search</code>, <code>read</code>, <code>web</code>. UIs do not special-case tool names. Presenters are pure functions of arguments plus the durable result, so live streaming and log replay share one path. A tool's render intent is part of its design, decided up front. Returning <code>undefined</code> selects generic fallback.</p>
 
-        <h2 id="code">Code Mode</h2>
-        <p>Cloudflare's observation, taken seriously: models are better at writing code than at emitting tool-call JSON, and intermediate tool results do not all belong in the next prompt.</p>
-        <p><code>tools.mode</code> is <code>native</code> (default), <code>code</code>, or <code>both</code>. An agent may <code>presentAs(mode)</code> to shadow that for itself. Under <code>code</code> or <code>both</code>:</p>
+        <h2 id="code">PTC mode</h2>
+        <p>Cloudflare named the observation Code Mode: models are better at writing code than at emitting tool-call JSON, and intermediate tool results do not all belong in the next prompt. The registry's name for the presentation is PTC. The closed union is <code>native</code> (default), <code>ptc</code>, or <code>both</code>. An agent may <code>presentAs(mode)</code> to shadow that for itself. The shipped <code>ptc</code> preset sets <code>mode: ptc</code> and disables the general <code>workflow</code> tool so the model does not get a second orchestration surface beside <code>run_code</code>; Ralph and the worker-thread engine stay mounted.</p>
+        <p>Under <code>ptc</code> or <code>both</code>:</p>
         <ul>
           <li>The registry contributes reserved transport <code>run_code { code, description }</code>. The name cannot be registered, restricted, shadowed, or removed.</li>
-          <li>Lazy section <code>tools:sdk</code> emits a byte-stable SDK for the loaded <code>ctx.codeRuntime.language</code> — TypeScript <code>ToolArgsMap</code> / <code>ToolOutputMap</code>, or Python <code>TypedDict</code>s. Lexicographic tool order, prefix-cache friendly.</li>
-          <li>Under <code>code</code> only, a model-direct call naming any other tool is <code>UNKNOWN_TOOL</code> before policy, with a teaching message to call it from inside the program. Nested dispatches that carry a parent token are exempt.</li>
-          <li>Each <code>await tools.name(args)</code> re-enters the complete native pipeline. Failures become <code>ToolCallError(toolName, message)</code>. Success returns the canonical JSON value.</li>
-          <li>Only <code>console.log</code> and <code>return</code> re-enter model context. Intermediate values stay in the worker, unbounded by bytes. Sub-calls log <code>tool/code-dispatch-start</code> / <code>tool/code-dispatch</code> for the UI; <code>deriveMessages()</code> ignores them.</li>
+          <li>Lazy section <code>tools:sdk</code> emits a byte-stable SDK for the loaded <code>ctx.codeRuntime.language</code> — TypeScript <code>ToolArgsMap</code> / <code>ToolOutputMap</code>, or Python <code>TypedDict</code>s. Lexicographic tool order, prefix-cache friendly. Under <code>ptc</code> the prompt also carries <code>tools:ptc-only</code> earlier in first-party order.</li>
+          <li>Under <code>ptc</code> only, a model-direct call naming any other tool is <code>UNKNOWN_TOOL</code> before policy, with a teaching message to call it from inside the program. Nested dispatches that carry a parent token are exempt.</li>
+          <li>Each <code>await tools.name(args)</code> re-enters the complete native pipeline. Failures become <code>ToolCallError(toolName, message)</code>. Success returns the canonical JSON value, never rendered Native prose.</li>
+          <li>Only <code>console.log</code> and <code>return</code> re-enter model context. Intermediate values stay in the worker, unbounded by bytes. Sub-calls log historical types <code>tool/code-dispatch-start</code> / <code>tool/code-dispatch</code> for the UI; the live waterfall <code>tools/ptc-dispatch-log</code> may change only that durable copy. <code>deriveMessages()</code> ignores them.</li>
           <li>Settlement aborts and drains so every sub-result lands inside the open turn. The inner pool reuses exclusive/parallel classification (<code>maxParallelSubCalls</code>, default 10).</li>
         </ul>
         <p>There is no persistent REPL. Cross-run state would be invisible to the log. Arguments must be lossless JSON: <code>undefined</code>, <code>BigInt</code>, cycles, sparse arrays, <code>-0</code>, and exotic objects reject that one call.</p>
 
         <h2 id="runtime">The runtime knows nothing about tools</h2>
         <p><code>ctx.codeRuntime</code> receives a program and named async bindings and reports <code>{ value, logs, error? }</code>. Language and isolation are backend descriptors. The shipped provider is a fresh Node worker thread per run: type-stripped TypeScript, empty <code>env</code>, heap/time/output caps, hard termination. The port protocol assumes a hostile peer because the peer runs model code.</p>
-        <p>Trust is bash-equivalent by design. The harness already ships a local shell that executes arbitrary model-written commands with more ambient authority. Code Mode does not invent a safer world; it invents a better calling convention.</p>
-        <p class="small">Try <code>pnpm run demo:code-mode</code>. Notes: Code Mode foundation, typed returns, live-parallel dispatch, executor collapse.</p>
+        <p>Trust is bash-equivalent by design. The harness already ships a local shell that executes arbitrary model-written commands with more ambient authority. PTC does not invent a safer world; it invents a better calling convention.</p>
+        <p class="small">Try <code>pnpm run demo:code-mode</code>. Notes: PTC mode foundation, typed returns, live-parallel dispatch, executor collapse.</p>
         <nav class="footer-nav" data-next></nav>
       </article>
     </main>

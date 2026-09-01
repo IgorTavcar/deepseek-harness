@@ -24,13 +24,15 @@
             <li data-mark="workflow">workflows</li>
             <li data-mark="subagents">subagents</li>
             <li data-mark="plan">plan</li>
+            <li data-mark="webhook">webhooks</li>
+            <li data-mark="teams">teams</li>
           </ol>
         </aside>
         <p class="kicker"><b>seq 0012</b> goals · ralph · workflow · subagents</p>
         <h1>Continuation is policy. The loop only admits another turn.</h1>
-        <p class="lede">A goal is not Ralph. Ralph is not a workflow script. A workflow is not a subagent. Plan mode is not a sandbox. Each of these is a plugin on <code>agent/*</code>, the session log, or <code>ctx.subagents</code>.</p>
+        <p class="lede">A goal is not Ralph. Ralph is not a workflow script. A workflow is not a subagent. Plan mode is not a sandbox. A webhook is not a scheduler. Each of these is a plugin on <code>agent/*</code>, the session log, <code>ctx.subagents</code>, or <code>ctx.webhookRuntime</code>.</p>
 
-        <h2 id="split">Four units people keep collapsing</h2>
+        <h2 id="split">Units people keep collapsing</h2>
         <table>
           <thead><tr><th>Unit</th><th>Memory</th><th>Who continues</th><th>Fresh agent?</th></tr></thead>
           <tbody>
@@ -38,6 +40,7 @@
             <tr><td>Goal round</td><td>The same conversation</td><td><code>goal-round-driver</code> through <code>agent/*</code></td><td>no</td></tr>
             <tr><td>Ralph round</td><td>The workspace plus a bounded handoff</td><td>Fixed workflow over fresh children</td><td>yes</td></tr>
             <tr><td>Workflow run</td><td>Whatever the script stores</td><td>Worker-thread engine calling <code>agent()</code></td><td>per call</td></tr>
+            <tr><td>Webhook Session</td><td>The new Session log</td><td>A trusted rule, then ordinary loop</td><td>new root</td></tr>
           </tbody>
         </table>
 
@@ -50,7 +53,7 @@
         <p>This is the opposite of a goal. A goal wants the conversation as memory. Ralph wants a clean context and a dirty workspace. Mixing them produces a child that inherits a parent prompt it cannot see the point of, or a same-session loop that pretends it started over.</p>
 
         <h2 id="workflow">Workflows are scripts, not the loop</h2>
-        <p><code>ctx.workflowEngine</code> runs model-authored orchestration in a worker thread. Isolation from the host event loop is not a security boundary. The general <code>workflow</code> tool and the fixed Ralph consumer both start runs whose <code>agent()</code> calls fan out through <code>ctx.subagents</code>. There is no named-provider registry: one engine per context, as with bash.</p>
+        <p><code>ctx.workflowEngine</code> runs model-authored orchestration in a worker thread. Isolation from the host event loop is not a security boundary. The general <code>workflow</code> tool and the fixed Ralph consumer both start runs whose <code>agent()</code> calls fan out through <code>ctx.subagents</code>. There is no named-provider registry: one engine per context, as with bash. The shipped <code>ptc</code> preset disables the general <code>workflow</code> tool so PTC does not grow a second orchestration surface; Ralph keeps the engine.</p>
 
         <h2 id="subagents">Delegation is a seam</h2>
         <p>Providers: spawn-in-process, fork-in-process, ACP, Codex, Claude Code, out-of-process dsh via the TypeScript SDK. The service also owns optional Activation-based continuation. <code>tool-subagent</code> selects one-shot or continuable delegation. <code>tool-subagent-control</code> delivers follow-ups. Background children register with <code>ctx.jobs</code>; <code>job_*</code> collects or stops them.</p>
@@ -58,6 +61,12 @@
 
         <h2 id="plan">Plan is logged collaboration, not confinement</h2>
         <p><code>ctx.planMode</code> folds <code>plan/mode</code> from the log, flushes user selections at turn boundaries, renders deployment-owned guidance, and registers <code>/plan</code>. Sandbox mode and approval policy do not read that boolean. Switching a permission preset writes one <code>permission/preset</code> event through to both knob events. The model can be in plan collaboration with workspace-write already on, or in full access with plan still active. Those combinations are allowed because the axes are independent.</p>
+
+        <h2 id="webhook">A webhook is a birth, not a supervisor</h2>
+        <p>A signed delivery hits a provider adapter, then a trusted rule. The rule returns <code>null</code> or one Workspace-backed Session request. The runtime stores no delivery record and does not wait for the Agent. A 202 means verified dispatch. Repeated deliveries may create another Session. Ordinary persistence owns later work.</p>
+
+        <h2 id="teams">Agent Teams are not the default catalog</h2>
+        <p>Experimental <code>ctx.agentTeams</code> layers a durable roster, mailbox, and task board over continuable children. The implicit Lead is the ordinary root Session. Teammates are named continuable children, not a new loop. The default tool catalog does not change. Released products must not depend on <code>packages/experimental/</code>.</p>
         <nav class="footer-nav" data-next></nav>
       </article>
     </main>
